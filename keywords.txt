@@ -1,0 +1,21 @@
+###########################################
+# Syntax Coloring Map For SimpleBox
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+SimpleHTTP          KEYWORD1
+SimpleOTA           KEYWORD1
+SimpleTracer        KEYWORD1
+
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+
+get                 KEYWORD2
+onDiscoverPressed   KEYWORD2
+onInstallPressed    KEYWORD2
+println             KEYWORD2
+run                 KEYWORD2

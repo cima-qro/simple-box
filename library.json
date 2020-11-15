@@ -1,0 +1,21 @@
+{
+    "name": "SimpleBox",
+    "keywords": "cima, ota, http, simple, iot, ethernet, esp8266",
+    "description": "This library allows you to access in a simple way the IoT 4.0 services of the CIMA.",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/soyantonio/simple-box"
+    },
+    "authors": {
+      "name": "CIMA"
+    },
+    "examples": "examples/*/*.ino",
+    "exclude": [
+      ".github"
+    ],
+    "frameworks": "arduino",
+    "platforms": [
+        "esp8266"
+    ],
+    "version": "0.1.0"
+}
