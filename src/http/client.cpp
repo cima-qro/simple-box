@@ -36,9 +36,7 @@ unsigned char SimpleHTTP::get(const char *path, string &response){
     return 2;
   }
   
-  char buffer[10];
-  itoa(http_code, buffer, 10);
-  this -> tracer.println({ "[HTTP] GET... code: ", buffer });
+  this -> tracer.println({ "[HTTP] GET... code: ", i2str(http_code) });
 
   if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
     response = http_client.getString().c_str();

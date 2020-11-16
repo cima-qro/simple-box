@@ -1,11 +1,12 @@
 #ifndef __SIMPLE_HTTP_H__
-  #define __SIMPLE_HTTP_H__
-  #include <string>
-  #include <ESP8266WiFi.h>
-  #include <ESP8266WiFiMulti.h>
-  #include <ESP8266HTTPClient.h>
-  #include "../vendor/ArduinoJson.h"
-  #include "../trace/tracer.h"
+#define __SIMPLE_HTTP_H__
+#include <string>
+#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+#include <ESP8266HTTPClient.h>
+#include "../vendor/ArduinoJson.h"
+#include "../trace/tracer.h"
+#include "../general/global.h"
 
   using namespace std;
 

@@ -1,21 +1,17 @@
 #include "ota_api.h"
 
 SimpleOTA::SimpleOTA(const char *domain, int port, bool debug, tracer_callback_t logger){
-    char buffer[10];
     this -> domain = domain;
     this -> new_version = false;
     this -> syncing = false;
     this -> enqueued = false;
+    this -> version_printed = false;
     this -> attempts = 0;
     this -> port = port;
 
-    itoa(this -> port, buffer, 10);
-    string host = "http://" + this -> domain + ":" + string(buffer);
-    this -> host = host;
-    
+    string host = "http://" + this -> domain + ":" + i2str(this -> port);
     this -> tracer = SimpleTracer(debug, logger);
     this -> http_client = SimpleHTTP(host.c_str(), this -> tracer);
-    this -> mac_address = WiFi.macAddress().c_str();
 }
 
 void SimpleOTA::onDiscoverPressed(int pin){
@@ -45,18 +41,29 @@ void SimpleOTA::onInstallPressed(int pin){
 }
 
 void SimpleOTA::run(){
-  if(! this -> enqueued) return;
-  string response;
-  char buffer[10];
+  if(this -> version_printed == false){
+    this -> version_printed = true;
+    this -> tracer.println({ SIMPLE_BOX_VERSION });
+  }
 
-  this -> attempts += 1;
-  itoa(this -> attempts, buffer, 10);
-  
-  this -> tracer.println({ "[OTA] Attempt " + string(buffer) + "..." });
-  unsigned char response_code = this -> http_client.get(PATH_BEGIN, response);
+  if(! this -> enqueued) return;
+  const int attempts = this -> attempts + 1;
+  this -> attempts = attempts;
+
+  string response;
+  this -> tracer.println({ "[OTA] Attempt " + i2str(attempts) + "..." });
+
+  if(attempts > 10){
+    this -> syncFail({
+      "Max attempts overflow"
+    });
+    return;
+  }
+
+  unsigned char response_code = this -> http_client.get(PATH_CONDITION, response);
 
   if(response_code != 0) {
-    if(this -> attempts == MAX_OTA_ATTEMPTS){
+    if(attempts == MAX_OTA_ATTEMPTS){
       this -> syncFail({
         "HTTP error"
       });
@@ -64,12 +71,13 @@ void SimpleOTA::run(){
     return;
   }
 
-  const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+  // https://arduinojson.org/v6/assistant/
+  const size_t capacity = JSON_OBJECT_SIZE(2) + 30;
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, response);
 
   if (error) {
-    if(this -> attempts == MAX_OTA_ATTEMPTS){
+    if(attempts == MAX_OTA_ATTEMPTS){
       this -> syncFail({
         "Deserialization process failed",
         error.c_str()
@@ -81,10 +89,9 @@ void SimpleOTA::run(){
   bool syncing = doc["syncing"].as<bool>();
 
   if(syncing){
-    if(this -> attempts == MAX_OTA_ATTEMPTS){
+    if(attempts == MAX_OTA_ATTEMPTS){
       this -> syncFail({
-        "Max attempts reached",
-        error.c_str()
+        "Max attempts reached and sync is still"
       });
     }
     return;
@@ -100,6 +107,7 @@ void SimpleOTA::run(){
     return;
   }
 
+  this -> tracer.println({ "[OTA] Sketch found!!" });
   this -> new_version = true;
   this -> syncing = false;
   this -> enqueued = false;
@@ -119,7 +127,8 @@ void SimpleOTA::discoverUpdate(int pin){
     return;
   }
 
-  const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+  // https://arduinojson.org/v6/assistant/
+  const size_t capacity = JSON_OBJECT_SIZE(1) + 10;
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, response);
   
