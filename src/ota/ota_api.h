@@ -4,14 +4,17 @@
     #include <ESP8266httpUpdate.h>
     #include "../http/client.h"
     #include "../trace/tracer.h"
-    #define PATH_DISCOVER "/discover"
-    #define PATH_OTA "/ota"
+    #define PATH_BEGIN "/iot/begin"
+    #define PATH_CONDITION "/iot/condition"
+    #define PATH_OTA "/iot/ota"
 
     class SimpleOTA {
         private:
             SimpleHTTP http_client;
             SimpleTracer tracer;
             bool new_version;
+            bool syncing;
+            bool enqueued;
             int port;
             string domain;
             string host;
@@ -27,6 +30,6 @@
         private:
             void discoverUpdate(int pin);
             void installUpdate(int pin);
-            
+            void syncFail(const vector<string> &msgs_per_line);
     };
 #endif

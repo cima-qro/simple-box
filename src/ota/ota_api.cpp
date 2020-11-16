@@ -4,6 +4,8 @@ SimpleOTA::SimpleOTA(const char *domain, int port, bool debug, tracer_callback_t
     char buffer[10];
     this -> domain = domain;
     this -> new_version = false;
+    this -> syncing = false;
+    this -> enqueued = false;
     this -> port = port;
 
     itoa(this -> port, buffer, 10);
@@ -17,14 +19,23 @@ SimpleOTA::SimpleOTA(const char *domain, int port, bool debug, tracer_callback_t
 
 void SimpleOTA::onDiscoverPressed(int pin){
   if (pin != 1) return;
+  // Recommend to avoid multiple requests
+  if(this -> syncing) return;
+
+  this -> syncing = true;
+  this -> new_version = false;
   this -> discoverUpdate(pin);
 }
 
 void SimpleOTA::onInstallPressed(int pin){
-  if (pin != 1 || this -> new_version == false) return;
-  
+  if (pin != 1) return;
+  // Only if a sketch is available to be downloaded
+  if (!this -> new_version) return;
+  // Recommend to reduce the errors of sync
+  if(this -> syncing) return;
+
+  this -> enqueued = false;
   this -> installUpdate(pin);
-  this ->new_version = false;
 }
 
 void SimpleOTA::run(){
@@ -35,7 +46,7 @@ void SimpleOTA::run(){
 void SimpleOTA::discoverUpdate(int pin){
   string response;
   this -> tracer.println({ "[OTA] Searching update..." });
-  unsigned char response_code = this -> http_client.get(PATH_DISCOVER, response);
+  unsigned char response_code = this -> http_client.get(PATH_BEGIN, response);
   
   if(response_code != 0) return;
 
@@ -45,25 +56,38 @@ void SimpleOTA::discoverUpdate(int pin){
   DeserializationError error = deserializeJson(doc, response);
   
   if (error) {
-    this -> tracer.println({ 
-      "[OTA] Deserialization process failed: ",
+    this -> syncFail({
+      "Deserialization process failed",
       error.c_str()
     });
     return;
   }
 
-  bool new_version = doc["new_version"].as<bool>();
-  if(!new_version){
-    this -> new_version = false;
-    this -> tracer.println({ "[OTA] No available version" });
+  bool enqueued = doc["enqueued"].as<bool>();
+  if(!enqueued){
+    this -> syncFail({
+      "Could not enqueue the sketch process"
+    });
     return;
   }
 
-  this -> new_version = true;
-  this -> tracer.println({ "[OTA] The available version is" });
-  this -> tracer.println({ "[OTA]", doc["id"].as<char*>() });
+  this -> enqueued = true;
+  this -> tracer.println({ "[OTA] Enqueued correctly" });
 }
 
 void SimpleOTA::installUpdate(int pin){
   ESPhttpUpdate.update(this -> domain.c_str(), this -> port, PATH_OTA);
+}
+
+void SimpleOTA::syncFail(const vector<string> &msgs_per_line){
+  this -> syncing = false;
+  this -> new_version = false;
+
+  size_t lines = msgs_per_line.size();
+  for(size_t i = 0; i < lines; ++i){
+    this -> tracer.println({ 
+    "[OTA][ERROR]",
+    msgs_per_line[i]
+  });
+  }
 }
