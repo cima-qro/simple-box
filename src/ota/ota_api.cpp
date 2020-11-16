@@ -32,10 +32,13 @@ void SimpleOTA::onDiscoverPressed(int pin){
 
 void SimpleOTA::onInstallPressed(int pin){
   if (pin != 1) return;
-  // Only if a sketch is available to be downloaded
-  if (!this -> new_version) return;
   // Recommend to reduce the errors of sync
   if(this -> syncing) return;
+  // Only if a sketch is available to be downloaded
+  if (!this -> new_version){
+    this -> tracer.println({ "[OTA] No version available" });
+    return;
+  }
 
   // Main behaviour
   this -> installUpdate(pin);
