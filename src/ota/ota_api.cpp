@@ -24,7 +24,7 @@ void SimpleOTA::onDiscoverPressed(int pin){
   if(this -> syncing) return;
 
   this -> syncing = true;
-  this -> new_version = false;
+  this -> new_version = false; // Force a reset
   this -> enqueued = false;
   this -> attempts = 0;
   this -> discoverUpdate(pin);
@@ -53,11 +53,54 @@ void SimpleOTA::run(){
   unsigned char response_code = this -> http_client.get(PATH_BEGIN, response);
 
   if(response_code != 0) {
+    if(this -> attempts == MAX_OTA_ATTEMPTS){
+      this -> syncFail({
+        "HTTP error"
+      });
+    }
+    return;
+  }
+
+  const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
+  DynamicJsonDocument doc(capacity);
+  DeserializationError error = deserializeJson(doc, response);
+
+  if (error) {
+    if(this -> attempts == MAX_OTA_ATTEMPTS){
+      this -> syncFail({
+        "Deserialization process failed",
+        error.c_str()
+      });
+    }
+    return;
+  }
+
+  bool syncing = doc["syncing"].as<bool>();
+
+  if(syncing){
+    if(this -> attempts == MAX_OTA_ATTEMPTS){
+      this -> syncFail({
+        "Max attempts reached",
+        error.c_str()
+      });
+    }
+    return;
+  }
+
+  bool downloaded = doc["downloaded"].as<bool>();
+
+  if(!downloaded){
     this -> syncFail({
-      "HTTP error"
+      "Could not found a sketch to download",
+      error.c_str()
     });
     return;
   }
+
+  this -> new_version = true;
+  this -> syncing = false;
+  this -> enqueued = false;
+  this -> attempts = 0;
 }
 
 
