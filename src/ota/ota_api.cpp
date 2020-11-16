@@ -153,6 +153,7 @@ void SimpleOTA::discoverUpdate(int pin){
 }
 
 void SimpleOTA::installUpdate(int pin){
+  this -> tracer.println({ "[OTA] Downloading skecth..." });
   ESPhttpUpdate.update(this -> domain.c_str(), this -> port, PATH_OTA);
 }
 
