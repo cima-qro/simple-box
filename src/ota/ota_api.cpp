@@ -24,6 +24,7 @@ void SimpleOTA::onDiscoverPressed(int pin){
 
   this -> syncing = true;
   this -> new_version = false;
+  this -> enqueued = false;
   this -> discoverUpdate(pin);
 }
 
@@ -34,7 +35,7 @@ void SimpleOTA::onInstallPressed(int pin){
   // Recommend to reduce the errors of sync
   if(this -> syncing) return;
 
-  this -> enqueued = false;
+  // Main behaviour
   this -> installUpdate(pin);
 }
 
