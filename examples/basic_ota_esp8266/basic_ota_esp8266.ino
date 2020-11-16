@@ -1,22 +1,3 @@
-# SimpleBox
-
-Simple and easy OTA services
-
-## Table of Contents
-- [SimpleBox](#simplebox)
-  - [Table of Contents](#table-of-contents)
-  - [Boards](#boards)
-  - [Examples](#examples)
-
-## Boards
-
-ESP8266 with Arduino
-
-## Examples
-
-A complete example using the ESP866 using Arduino
-
-```cpp
 #include <ESP8266WiFi.h>
 #include <SimpleBox.h>
 
@@ -52,8 +33,6 @@ void loop(){
     OtaClient.run();
   }
 
-  // ...
-
   delay(2); //ms
 }
 
@@ -72,4 +51,3 @@ void installSketch{
   OtaClient.onInstallPressed(param.asInt());
 }
 // -------- END OTA --------
-```
