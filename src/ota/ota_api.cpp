@@ -6,6 +6,7 @@ SimpleOTA::SimpleOTA(const char *domain, int port, bool debug, tracer_callback_t
     this -> new_version = false;
     this -> syncing = false;
     this -> enqueued = false;
+    this -> attempts = 0;
     this -> port = port;
 
     itoa(this -> port, buffer, 10);
@@ -25,6 +26,7 @@ void SimpleOTA::onDiscoverPressed(int pin){
   this -> syncing = true;
   this -> new_version = false;
   this -> enqueued = false;
+  this -> attempts = 0;
   this -> discoverUpdate(pin);
 }
 
@@ -40,7 +42,22 @@ void SimpleOTA::onInstallPressed(int pin){
 }
 
 void SimpleOTA::run(){
-  // Do something
+  if(! this -> enqueued) return;
+  string response;
+  char buffer[10];
+
+  this -> attempts += 1;
+  itoa(this -> attempts, buffer, 10);
+  
+  this -> tracer.println({ "[OTA] Attempt " + string(buffer) + "..." });
+  unsigned char response_code = this -> http_client.get(PATH_BEGIN, response);
+
+  if(response_code != 0) {
+    this -> syncFail({
+      "HTTP error"
+    });
+    return;
+  }
 }
 
 
@@ -49,10 +66,14 @@ void SimpleOTA::discoverUpdate(int pin){
   this -> tracer.println({ "[OTA] Searching update..." });
   unsigned char response_code = this -> http_client.get(PATH_BEGIN, response);
   
-  if(response_code != 0) return;
+  if(response_code != 0) {
+    this -> syncFail({
+      "HTTP error"
+    });
+    return;
+  }
 
   const size_t capacity = JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2) + 60;
-  
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, response);
   
@@ -83,6 +104,8 @@ void SimpleOTA::installUpdate(int pin){
 void SimpleOTA::syncFail(const vector<string> &msgs_per_line){
   this -> syncing = false;
   this -> new_version = false;
+  this -> enqueued = false;
+  this -> attempts = 0;
 
   size_t lines = msgs_per_line.size();
   for(size_t i = 0; i < lines; ++i){

@@ -7,6 +7,7 @@
     #define PATH_BEGIN "/iot/begin"
     #define PATH_CONDITION "/iot/condition"
     #define PATH_OTA "/iot/ota"
+    #define MAX_OTA_ATTEMPTS 10
 
     class SimpleOTA {
         private:
@@ -16,6 +17,7 @@
             bool syncing;
             bool enqueued;
             int port;
+            int attempts;
             string domain;
             string host;
             string mac_address;
