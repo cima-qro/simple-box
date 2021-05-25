@@ -4,7 +4,7 @@
     "description": "This library allows you to access in a simple way the IoT 4.0 services of the CIMA.",
     "repository": {
       "type": "git",
-      "url": "https://github.com/soyantonio/simple-box"
+      "url": "https://github.com/cima-qro/simple-box"
     },
     "authors": {
       "name": "CIMA"
@@ -17,5 +17,5 @@
     "platforms": [
         "esp8266"
     ],
-    "version": "0.2.0"
+    "version": "0.2.1"
 }
